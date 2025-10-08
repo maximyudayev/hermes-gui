@@ -1,0 +1,6 @@
+# Temporary/generated files
+###################################
+__pycache__
+*.pyc
+*.asv
+.venv*/

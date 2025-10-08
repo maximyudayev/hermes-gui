@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pysio-hermes-gui"
+version = "0.1.0"
+requires-python = ">=3.7"
+authors = [
+  { name="Maxim Yudayev", email="maxim@yudayev.com" },
+]
+description = "A streaming dashboard GUI support module for HERMES"
+keywords = ["embedded ai", "wearables", "sensors", "dashboard", "gui", "plotly", "streaming", "realtime processing", "physiology"]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Healthcare Industry",
+  "Intended Audience :: Education",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Medical Science Apps",
+  "Topic :: System :: Distributed Computing"
+]
+dependencies = [
+  "pysio-hermes",
+  "dash",
+  "dash_bootstrap_components"
+]
+
+[project.urls]
+Repository = "https://github.com/maximyudayev/hermes-gui.git"
+Issues = "https://github.com/maximyudayev/hermes/issues"
+Changelog = "https://github.com/maximyudayev/hermes-gui/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["hermes.gui"]
