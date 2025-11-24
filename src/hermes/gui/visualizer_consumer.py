@@ -1,6 +1,6 @@
 ############
 #
-# Copyright (c) 2024 Maxim Yudayev and KU Leuven eMedia Lab
+# Copyright (c) 2024-2025 Maxim Yudayev and KU Leuven eMedia Lab
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,57 +28,66 @@
 import threading
 from wsgiref.simple_server import make_server
 
-from hermes.base.nodes import Consumer
-from hermes.utils.gui_utils import server, app
+from hermes.base.nodes.consumer import Consumer
+from hermes.utils.types import LoggingSpec
 from hermes.utils.zmq_utils import *
+from hermes.gui.gui_utils import server, app
 
 
-######################################
-######################################
-# A class to visualize streaming data.
-######################################
-######################################
 class DataVisualizer(Consumer):
-  @classmethod
-  def _log_source_tag(cls) -> str:
-    return 'visualizer'
+    """Consumer node that visualizes streaming data using Dash GUI."""
 
+    @classmethod
+    def _log_source_tag(cls) -> str:
+        return "visualizer"
 
-  def __init__(self,
-               host_ip: str,
-               stream_in_specs: list[dict],
-               logging_spec: dict,
-               log_history_filepath: str | None = None,
-               port_sub: str = PORT_FRONTEND,
-               port_sync: str = PORT_SYNC_HOST,
-               port_killsig: str = PORT_KILL,
-               **_):
+    def __init__(
+        self,
+        host_ip: str,
+        stream_in_specs: list[dict],
+        logging_spec: LoggingSpec,
+        log_history_filepath: str | None = None,
+        port_sub: str = PORT_FRONTEND,
+        port_sync: str = PORT_SYNC_HOST,
+        port_killsig: str = PORT_KILL,
+        **_,
+    ):
 
-    super().__init__(host_ip=host_ip,
-                     stream_in_specs=stream_in_specs,
-                     logging_spec=logging_spec,
-                     port_sub=port_sub,
-                     port_sync=port_sync,
-                     port_killsig=port_killsig,
-                     log_history_filepath=log_history_filepath)
+        super().__init__(
+            host_ip=host_ip,
+            stream_in_specs=stream_in_specs,
+            logging_spec=logging_spec,
+            port_sub=port_sub,
+            port_sync=port_sync,
+            port_killsig=port_killsig,
+        )
 
-    # Init all Dash widgets before launching the server and the GUI thread.
-    # NOTE: order Dash widgets in the order of streamer specs provided upstream.
-    app.layout = dbc.Container([
-      visualizer for visualizer in [stream.build_visulizer() for stream in self._streams.values()] if visualizer is not None
-    ])
+        # Init all Dash widgets before launching the server and the GUI thread.
+        # NOTE: order Dash widgets in the order of streamer specs provided upstream.
+        app.layout = dbc.Container(
+            [
+                visualizer
+                for visualizer in [
+                    stream.build_visulizer() for stream in self._streams.values()
+                ]
+                if visualizer is not None
+            ]
+        )
 
-    # Launch Dash GUI thread.
-    self._flask_server = make_server(DNS_LOCALHOST, int(PORT_GUI), server)
-    self._flask_server_thread = threading.Thread(target=self._flask_server.serve_forever)
-    self._flask_server_thread.start()
+        # Launch Dash GUI thread.
+        self._flask_server = make_server(DNS_LOCALHOST, int(PORT_GUI), server)
+        self._flask_server_thread = threading.Thread(
+            target=self._flask_server.serve_forever
+        )
+        self._flask_server_thread.start()
 
-    self._dash_app_thread = threading.Thread(target=app.run, kwargs={'debug': True, 'use_reloader': False})
-    self._dash_app_thread.start()
+        self._dash_app_thread = threading.Thread(
+            target=app.run, kwargs={"debug": True, "use_reloader": False}
+        )
+        self._dash_app_thread.start()
 
-
-  def _cleanup(self):
-    self._flask_server.shutdown()
-    self._flask_server_thread.join()
-    self._dash_app_thread.join()
-    super()._cleanup()
+    def _cleanup(self):
+        self._flask_server.shutdown()
+        self._flask_server_thread.join()
+        self._dash_app_thread.join()
+        super()._cleanup()

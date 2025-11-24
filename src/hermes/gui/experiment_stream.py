@@ -1,6 +1,6 @@
 ############
 #
-# Copyright (c) 2024 Maxim Yudayev and KU Leuven eMedia Lab
+# Copyright (c) 2024-2025 Maxim Yudayev and KU Leuven eMedia Lab
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,39 +27,38 @@
 
 from collections import OrderedDict
 
-from hermes.base import Stream
+from hermes.base.stream import Stream
 
 
-################################################
-################################################
-# A structure to store Experiment stream's data.
-################################################
-################################################
 class ExperimentControlStream(Stream):
-  def __init__(self, 
-               activities: list[str],
-               sampling_rate_hz: int = 0,
-               **_) -> None:
-    super().__init__()
-    self._activities = activities
-    self._define_data_notes()
+    def __init__(self, activities: list[str], sampling_rate_hz: int = 0, **_) -> None:
+        super().__init__()
+        self._activities = activities
+        self._define_data_notes()
 
-    self.add_stream(device_name='experiment',
-                    stream_name='activity',
-                    data_type='S26',
-                    sample_size=[1],
-                    sampling_rate_hz=sampling_rate_hz)
+        self.add_stream(
+            device_name="experiment",
+            stream_name="activity",
+            data_type="S26",
+            sample_size=[1],
+            sampling_rate_hz=sampling_rate_hz,
+        )
 
+    def get_fps(self) -> dict[str, float | None]:
+        return {"experiment": None}
 
-  def get_fps(self) -> dict[str, float | None]:
-    return {'experiment': None}
+    def _define_data_notes(self) -> None:
+        self._data_notes = {}
+        self._data_notes.setdefault("experiment", {})
 
-
-  def _define_data_notes(self) -> None:
-    self._data_notes = {}
-    self._data_notes.setdefault('experiment', {})
-
-    self._data_notes['experiment']['activity'] = OrderedDict([
-      ('Description', 'Label of the performed activity, marked during the trial by the researcher. '
-                      '[0,%d], corresponding to %s'.format(len(self._activities)-1, self._activities))
-    ])
+        self._data_notes["experiment"]["activity"] = OrderedDict(
+            [
+                (
+                    "Description",
+                    "Label of the performed activity, marked during the trial by the researcher. "
+                    "[0,%d], corresponding to %s".format(
+                        len(self._activities) - 1, self._activities
+                    ),
+                )
+            ]
+        )

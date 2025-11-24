@@ -1,6 +1,6 @@
 ############
 #
-# Copyright (c) 2024 Maxim Yudayev and KU Leuven eMedia Lab
+# Copyright (c) 2024-2025 Maxim Yudayev and KU Leuven eMedia Lab
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,70 +31,86 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from hermes.gui.widgets import Visualizer
-from hermes.base import Stream
-from hermes.utils.gui_utils import app
+from hermes.base.stream import Stream
+from hermes.gui.gui_utils import app
 
 
-# NOTE: Expects data in BGR
 class GazeVisualizer(Visualizer):
-  def __init__(self,
-               stream: Stream,
-               unique_id: str,
-               world_data_path: dict[str, str],
-               gaze_data_path: dict[str, str],
-               legend_name: str,
-               update_interval_ms: int, # TODO: have 2 update intervals (for video and for gaze overlay)
-               col_width: int = 6):
-    super().__init__(stream=stream,
-                     col_width=col_width)
+    """Visualizer for gaze streams."""
 
-    self._world_data_path = world_data_path
-    self._gaze_data_path = gaze_data_path
-    self._legend_name = legend_name
-    self._update_interval_ms = update_interval_ms
-    self._unique_id = unique_id
+    def __init__(
+        self,
+        stream: Stream,
+        unique_id: str,
+        world_data_path: dict[str, str],
+        gaze_data_path: dict[str, str],
+        legend_name: str,
+        update_interval_ms: int,  # TODO: have 2 update intervals (for video and for gaze overlay)
+        col_width: int = 6,
+    ):
+        super().__init__(stream=stream, col_width=col_width)
 
-    self._image = dcc.Graph(id="%s-gaze"%(self._unique_id))
-    self._interval = dcc.Interval(id="%s-gaze-interval"%(self._unique_id), interval=self._update_interval_ms, n_intervals=0)
-    self._layout = dbc.Col([
-        self._image,
-        self._interval],
-      width=self._col_width)
-    self._activate_callbacks()
+        self._world_data_path = world_data_path
+        self._gaze_data_path = gaze_data_path
+        self._legend_name = legend_name
+        self._update_interval_ms = update_interval_ms
+        self._unique_id = unique_id
 
+        self._image = dcc.Graph(id="%s-gaze" % (self._unique_id))
+        self._interval = dcc.Interval(
+            id="%s-gaze-interval" % (self._unique_id),
+            interval=self._update_interval_ms,
+            n_intervals=0,
+        )
+        self._layout = dbc.Col([self._image, self._interval], width=self._col_width)
+        self._activate_callbacks()
 
-  # Callback definition must be wrapped inside an object method 
-  #   to get access to the class instance object with reference to `Stream`. 
-  def _activate_callbacks(self):
-    @app.callback(
-      Output("%s-gaze"%(self._unique_id), component_property='figure'),
-      Input("%s-gaze-interval"%(self._unique_id), component_property='n_intervals'),
-      State("%s-gaze"%(self._unique_id), component_property='figure'),
-      prevent_initial_call=True
-    )
-    def update_live_data(n, old_fig):
-      # Display the captured image.
-      world_device_name, world_stream_name = list(self._world_data_path.items())[0]
-      new_data = self._stream.get_data(device_name=world_device_name,
-                                       stream_name=world_stream_name,
-                                       starting_index=-1)
-      if new_data is not None:
-        world_data = new_data['data'][0]
-        fig = px.imshow(img=world_data)
-        # fig.update(title_text=self._legend_name)
-        fig.update_layout(coloraxis_showscale=False)
-        fig.update_xaxes(showticklabels=False)
-        fig.update_yaxes(showticklabels=False)
-        # Overlay scene gaze point onto the image.
-        gaze_device_name, gaze_stream_name = list(self._gaze_data_path.items())[0]
-        new_gaze_data = self._stream.get_data(device_name=gaze_device_name,
-                                              stream_name=gaze_stream_name,
-                                              starting_index=-1)
-        if new_gaze_data is not None:
-          gaze_data = new_gaze_data['data'][0]
-          fig.add_trace(go.Scatter(x=gaze_data[0],
-                                   y=gaze_data[1],
-                                   marker=dict(color='red', size=16)))
-        return fig
-      else:
-        return old_fig
+    # Callback definition must be wrapped inside an object method
+    #   to get access to the class instance object with reference to `Stream`.
+    def _activate_callbacks(self):
+        @app.callback(
+            Output("%s-gaze" % (self._unique_id), component_property="figure"),
+            Input(
+                "%s-gaze-interval" % (self._unique_id), component_property="n_intervals"
+            ),
+            State("%s-gaze" % (self._unique_id), component_property="figure"),
+            prevent_initial_call=True,
+        )
+        def update_live_data(n, old_fig):
+            # Display the captured image.
+            world_device_name, world_stream_name = list(self._world_data_path.items())[
+                0
+            ]
+            new_data = self._stream.get_data(
+                device_name=world_device_name,
+                stream_name=world_stream_name,
+                starting_index=-1,
+            )
+            if new_data is not None:
+                world_data = new_data["data"][0]
+                fig = px.imshow(img=world_data)
+                # fig.update(title_text=self._legend_name)
+                fig.update_layout(coloraxis_showscale=False)
+                fig.update_xaxes(showticklabels=False)
+                fig.update_yaxes(showticklabels=False)
+                # Overlay scene gaze point onto the image.
+                gaze_device_name, gaze_stream_name = list(self._gaze_data_path.items())[
+                    0
+                ]
+                new_gaze_data = self._stream.get_data(
+                    device_name=gaze_device_name,
+                    stream_name=gaze_stream_name,
+                    starting_index=-1,
+                )
+                if new_gaze_data is not None:
+                    gaze_data = new_gaze_data["data"][0]
+                    fig.add_trace(
+                        go.Scatter(
+                            x=gaze_data[0],
+                            y=gaze_data[1],
+                            marker=dict(color="red", size=16),
+                        )
+                    )
+                return fig
+            else:
+                return old_fig

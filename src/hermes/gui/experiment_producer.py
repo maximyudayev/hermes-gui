@@ -1,6 +1,6 @@
 ############
 #
-# Copyright (c) 2024 Maxim Yudayev and KU Leuven eMedia Lab
+# Copyright (c) 2024-2025 Maxim Yudayev and KU Leuven eMedia Lab
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,8 @@
 #
 # ############
 
-from hermes.base.nodes import Producer
+from hermes.base.nodes.producer import Producer
+from hermes.utils.types import LoggingSpec
 from hermes.gui.experiment_stream import ExperimentControlStream
 from hermes.utils.print_utils import *
 from hermes.utils.zmq_utils import *
@@ -39,46 +40,43 @@ from hermes.utils.zmq_utils import *
 #####################################################################
 #####################################################################
 class ExperimentControlStreamer(Producer):
-  @classmethod
-  def _log_source_tag(cls) -> str:
-    return 'control'
+    @classmethod
+    def _log_source_tag(cls) -> str:
+        return "control"
 
-  
-  def __init__(self,
-               host_ip: str,
-               logging_spec: dict,
-               activities: list[str],
-               port_pub: str = PORT_BACKEND,
-               port_sync: str = PORT_SYNC_HOST,
-               port_killsig: str = PORT_KILL,
-               **_):
-    
-    stream_out_spec = {
-      "activities": activities
-    }
+    def __init__(
+        self,
+        host_ip: str,
+        logging_spec: LoggingSpec,
+        activities: list[str],
+        port_pub: str = PORT_BACKEND,
+        port_sync: str = PORT_SYNC_HOST,
+        port_killsig: str = PORT_KILL,
+        **_,
+    ):
 
-    super().__init__(host_ip=host_ip,
-                     stream_out_spec=stream_out_spec,
-                     logging_spec=logging_spec,
-                     port_pub=port_pub,
-                     port_sync=port_sync,
-                     port_killsig=port_killsig)
+        stream_out_spec = {"activities": activities}
 
+        super().__init__(
+            host_ip=host_ip,
+            stream_out_spec=stream_out_spec,
+            logging_spec=logging_spec,
+            port_pub=port_pub,
+            port_sync=port_sync,
+            port_killsig=port_killsig,
+        )
 
-  @classmethod
-  def create_stream(cls, stream_spec: dict) -> ExperimentControlStream:
-    return ExperimentControlStream(**stream_spec)
+    @classmethod
+    def create_stream(cls, stream_spec: dict) -> ExperimentControlStream:
+        return ExperimentControlStream(**stream_spec)
 
+    def _ping_device(self) -> None:
+        return None
 
-  def _ping_device(self) -> None:
-    return None
+    # Connect to the sensor device(s).
+    def _connect(self) -> bool:
+        return True
 
-
-  # Connect to the sensor device(s).
-  def _connect(self) -> bool:
-    return True
-
-
-  # Clean up and quit
-  def _cleanup(self) -> None:
-    super()._cleanup()
+    # Clean up and quit
+    def _cleanup(self) -> None:
+        super()._cleanup()
