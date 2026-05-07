@@ -40,12 +40,9 @@ from hermes.utils.zmq_utils import *
 #####################################################################
 #####################################################################
 class ExperimentControlStreamer(Producer):
-    @classmethod
-    def _log_source_tag(cls) -> str:
-        return "control"
-
     def __init__(
         self,
+        topic: str,
         host_ip: str,
         logging_spec: LoggingSpec,
         activities: list[str],
@@ -58,6 +55,7 @@ class ExperimentControlStreamer(Producer):
         stream_out_spec = {"activities": activities}
 
         super().__init__(
+            topic=topic,
             host_ip=host_ip,
             stream_out_spec=stream_out_spec,
             logging_spec=logging_spec,
